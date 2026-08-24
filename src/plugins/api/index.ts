@@ -82,6 +82,10 @@ const TRANSLATIONS_SCHEMA_VERSION = 32;
 // The shuffle argument on player_queues/play_media landed in API schema 51.
 const PLAY_MEDIA_SHUFFLE_SCHEMA_VERSION = 51;
 
+// dashboard/viewer_preferences and the milkdrop_visualizer config/report_capability
+// commands landed in API schema 56.
+const DASHBOARD_VISUALIZER_SCHEMA_VERSION = 56;
+
 export interface PlayMediaOptions {
   start_item?: PlayableMediaItemType | string;
   queue_id?: string;
@@ -2911,6 +2915,14 @@ export class MusicAssistantApi {
     return (
       (this.serverInfo.value?.schema_version ?? 0) >=
       PLAY_MEDIA_SHUFFLE_SCHEMA_VERSION
+    );
+  }
+
+  /** Whether the connected server implements the dashboard visualizer commands (schema >= 56). */
+  public get supportsDashboardVisualizer(): boolean {
+    return (
+      (this.serverInfo.value?.schema_version ?? 0) >=
+      DASHBOARD_VISUALIZER_SCHEMA_VERSION
     );
   }
 
