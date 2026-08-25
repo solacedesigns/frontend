@@ -163,9 +163,27 @@ export const getCompanionPlayerId = async (): Promise<string | null> => {
  * @param authToken - Auth token for the MA server proxy (required)
  * @returns The player ID if the client was started, null otherwise
  */
+/**
+ * Remote ID of the current remote-access session, if any.
+ *
+ * Imported lazily so the companion plugin does not pull the remote-connection
+ * manager (whose module-level singleton touches browser storage) into the
+ * import graph of everything that uses companion helpers.
+ */
+const currentRemoteId = async (): Promise<string | undefined> => {
+  try {
+    const { remoteConnectionManager } =
+      await import("@/plugins/remote/connection-manager");
+    return remoteConnectionManager.currentRemoteId.value ?? undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export const configureSendspin = async (
   serverBaseUrl: string,
   authToken: string,
+  remoteId?: string,
 ): Promise<string | null> => {
   const invoke = getCompanionInvoke();
   if (!invoke) return null;
@@ -173,11 +191,15 @@ export const configureSendspin = async (
   try {
     console.log(
       "[Companion] Configuring Sendspin with server URL:",
-      serverBaseUrl,
+      serverBaseUrl || `(remote connection ${remoteId})`,
     );
+    // remoteId tells the companion app to reach the server through the MA
+    // remote-access WebRTC gateway instead of dialing serverBaseUrl directly.
+    // Older companion app versions simply ignore the extra argument.
     const playerId = await invoke<string | null>("configure_sendspin", {
       serverBaseUrl,
       authToken,
+      remoteId: remoteId ?? null,
     });
     if (playerId) {
       console.log("[Companion] Sendspin client started with ID:", playerId);
@@ -510,11 +532,15 @@ export const initializeCompanionIntegration = async (
   companionMode.value = true;
   console.log("[Companion] Companion mode enabled");
 
-  // Configure native Sendspin player (backend will check if enabled)
-  if (serverAddress) {
+  // Configure native Sendspin player (backend will check if enabled).
+  // On a remote (WebRTC) connection there is no reachable server address;
+  // the companion app instead tunnels through the remote-access gateway
+  // using the Remote ID.
+  const remoteId = await currentRemoteId();
+  if (serverAddress || remoteId) {
     const token = authManager.getToken();
     if (token) {
-      const playerId = await configureSendspin(serverAddress, token);
+      const playerId = await configureSendspin(serverAddress, token, remoteId);
       // Store companion player ID so UI can show "This device" badge
       if (playerId) {
         store.companionPlayerId = playerId;

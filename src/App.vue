@@ -385,10 +385,13 @@ const completeInitialization = async () => {
   initializationCompleted = true;
   await initializeWebPlayerModeSync();
 
-  // Initialize companion app integration
-  if (api.baseUrl) {
-    initializeCompanionIntegration(api.baseUrl);
-  }
+  // Initialize companion app integration. No api.baseUrl gate: on remote
+  // (WebRTC) connections baseUrl is empty, but the companion integration must
+  // still run — it configures the native Sendspin player (which tunnels via
+  // the remote-access gateway), sets companionMode/companionPlayerId, and
+  // starts the now-playing watcher. initializeCompanionIntegration is a
+  // no-op outside the companion app (isCompanionApp gate).
+  initializeCompanionIntegration(api.baseUrl || "");
 
   // Helper function to show server state notifications
   let startingToastId: string | number | undefined;
