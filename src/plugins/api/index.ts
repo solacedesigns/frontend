@@ -102,6 +102,9 @@ export interface CommandOptions {
 // The match_policy argument on music/playlists/import_playlist landed in API schema 59.
 const IMPORT_PLAYLIST_MATCH_POLICY_SCHEMA_VERSION = 59;
 
+// music/playlists/migrate_playlist landed in API schema 60.
+const MIGRATE_PLAYLIST_SCHEMA_VERSION = 60;
+
 export interface PlayMediaOptions {
   start_item?: PlayableMediaItemType | string;
   queue_id?: string;
@@ -944,6 +947,28 @@ export class MusicAssistantApi {
       match_providers,
       // omit on older servers so the call doesn't send an unsupported argument
       match_policy: this.supportsPlaylistMatchPolicy ? match_policy : undefined,
+    });
+  }
+
+  public migratePlaylist(
+    db_playlist_id: string | number,
+    destination_provider: string,
+    match_policy: PlaylistMatchPolicy,
+    name?: string,
+  ): Promise<BackgroundTask> {
+    return this.sendCommand<BackgroundTask>(
+      "music/playlists/migrate_playlist",
+      {
+        db_playlist_id,
+        destination_provider,
+        match_policy,
+        name,
+      },
+      // the dialog shows its own error toast; avoid a duplicate global one.
+      { suppressGlobalError: true },
+    ).then((task) => {
+      this._notifyBackgroundTaskStarted(task);
+      return task;
     });
   }
 
@@ -2983,6 +3008,14 @@ export class MusicAssistantApi {
     return (
       (this.serverInfo.value?.schema_version ?? 0) >=
       IMPORT_PLAYLIST_MATCH_POLICY_SCHEMA_VERSION
+    );
+  }
+
+  /** Whether the connected server can migrate a playlist to another provider (schema >= 60). */
+  public get supportsPlaylistMigration(): boolean {
+    return (
+      (this.serverInfo.value?.schema_version ?? 0) >=
+      MIGRATE_PLAYLIST_SCHEMA_VERSION
     );
   }
 
