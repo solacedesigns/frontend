@@ -540,7 +540,17 @@ export const initializeCompanionIntegration = async (
   if (serverAddress || remoteId) {
     const token = authManager.getToken();
     if (token) {
-      const playerId = await configureSendspin(serverAddress, token, remoteId);
+      let playerId = await configureSendspin(serverAddress, token, remoteId);
+      if (!playerId) {
+        // The very first IPC call after page load can be lost while Tauri
+        // probes its custom-protocol transport and falls back to postMessage
+        // (observed on macOS WKWebView with remote https origins). Retry
+        // once, then fall back to asking the app for the id of an already
+        // configured player.
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        playerId = await configureSendspin(serverAddress, token, remoteId);
+        playerId ??= await getCompanionPlayerId();
+      }
       // Store companion player ID so UI can show "This device" badge
       if (playerId) {
         store.companionPlayerId = playerId;
