@@ -194,6 +194,7 @@
             <v-card-subtitle
               v-if="showLine"
               class="caption main-media-details-stream-description"
+              :style="`font-size: ${descriptionFontSize};`"
             >
               {{ showLine }}
             </v-card-subtitle>
@@ -954,6 +955,13 @@ const subTitleFontSize = computed(() => {
   // Anchor album/artist size to the track title using the EditorialMediaCard
   // tile ratio (subtitle 12px / title 14px).
   return `${(parseFloat(titleFontSize.value) * (12 / 14)).toFixed(3)}em`;
+});
+
+const descriptionFontSize = computed(() => {
+  // A third tier under the artist line, on the same ladder as the two above
+  // it: .caption alone is a fixed size and stayed tiny as the card grew.
+  // 8/14 rather than the artist's 12/14 keeps the step between them visible.
+  return `${(parseFloat(titleFontSize.value) * (8 / 14)).toFixed(3)}em`;
 });
 
 const playerSelectLabel = computed(() => {
