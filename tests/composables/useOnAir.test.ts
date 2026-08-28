@@ -4,10 +4,12 @@ import {
   MediaType,
   type Player,
   type PlayerMedia,
+  type QueueItem,
 } from "@/plugins/api/interfaces";
 
 const storeMock = reactive({
   activePlayer: undefined as Player | undefined,
+  curQueueItem: undefined as QueueItem | undefined,
 });
 vi.mock("@/plugins/store", () => ({ store: storeMock }));
 
@@ -29,6 +31,15 @@ function playing(media_type: MediaType, title: string | null): Player {
     powered: true,
     current_media: { media_type, title } as PlayerMedia,
   } as Player;
+}
+
+/** A resolved radio station sitting in the queue, as MA reports it. */
+function radioQueueItem(name: string): QueueItem {
+  return {
+    queue_item_id: "item-1",
+    name,
+    media_item: { media_type: MediaType.RADIO, name },
+  } as QueueItem;
 }
 
 /** Run the composable inside a scope so its interval and watchers clean up. */
@@ -60,6 +71,7 @@ beforeEach(async () => {
   sendCommand.mockReset();
   apiState.value = "initialized";
   storeMock.activePlayer = playing(MediaType.RADIO, "89.3 The Current");
+  storeMock.curQueueItem = undefined;
 });
 
 afterEach(() => {
@@ -118,6 +130,39 @@ describe("useOnAir", () => {
     });
   });
 
+  it("names the station from the queue item, not the player's reported title", async () => {
+    // A WiiM over DLNA reports its own state: the ICY track lands in
+    // current_media.title and the station is pushed into artist. Trusting the
+    // title asked about a song and got nothing back.
+    storeMock.activePlayer = playing(
+      MediaType.TRACK,
+      "The Great Divide-Noah Kahan",
+    );
+    storeMock.curQueueItem = radioQueueItem("The Current");
+    sendCommand.mockResolvedValue(BLOCK);
+    await withOnAir(async ({ onAirLabel }) => {
+      await vi.waitFor(() => expect(onAirLabel.value).toBe("Zach McCormick"));
+      expect(sendCommand).toHaveBeenCalledWith(
+        "listening_habits/on_air",
+        { station: "The Current" },
+        expect.objectContaining({ suppressGlobalError: true }),
+      );
+    });
+  });
+
+  it("does not re-ask when only the song changes on the same station", async () => {
+    storeMock.curQueueItem = radioQueueItem("The Current");
+    sendCommand.mockResolvedValue(BLOCK);
+    await withOnAir(async () => {
+      await vi.waitFor(() => expect(sendCommand).toHaveBeenCalledTimes(1));
+      // Still typed radio, but the player rewrote the title to the new song.
+      storeMock.activePlayer = playing(MediaType.RADIO, "Some Other Song");
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(sendCommand).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("drops a reply that lost a race with a station change", async () => {
     let release: (block: unknown) => void = () => {};
     sendCommand.mockImplementationOnce(
@@ -126,7 +171,7 @@ describe("useOnAir", () => {
     await withOnAir(async ({ onAir }) => {
       // Second station wins while the first request is still in flight.
       sendCommand.mockResolvedValue(null);
-      storeMock.activePlayer = playing(MediaType.RADIO, "KEXP");
+      storeMock.curQueueItem = radioQueueItem("KEXP");
       await vi.waitFor(() => expect(sendCommand).toHaveBeenCalledTimes(2));
       release(BLOCK);
       await Promise.resolve();

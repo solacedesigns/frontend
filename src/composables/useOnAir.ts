@@ -34,14 +34,24 @@ let timer: ReturnType<typeof setInterval> | undefined;
 let lastStation: string | undefined;
 
 /**
- * The station name to ask about: only a live station has a presenter, and on
- * radio the loaded media's title *is* the station rather than the song.
+ * The station name to ask about, or undefined when nothing live is playing.
+ *
+ * Read from the queue item rather than current_media. The queue item holds the
+ * station MA resolved when playback started and no player can overwrite it,
+ * whereas current_media is whatever the *player* reports: on a provider that
+ * reports its own state (a WiiM over DLNA) the ICY track lands in `title` and
+ * the station is pushed into `artist`, so the title names the song instead.
  */
 function currentStation(): string | undefined {
-  const media = store.activePlayer?.current_media;
   if (store.activePlayer?.powered === false) return undefined;
-  if (media?.media_type !== MediaType.RADIO) return undefined;
-  return media.title ?? undefined;
+  const item = store.curQueueItem;
+  if (item?.media_item?.media_type === MediaType.RADIO) {
+    return item.media_item.name || item.name || undefined;
+  }
+  // Only reached when the queue item has no resolved media item.
+  const media = store.activePlayer?.current_media;
+  if (media?.media_type === MediaType.RADIO) return media.title ?? undefined;
+  return undefined;
 }
 
 async function refresh(): Promise<void> {
@@ -85,10 +95,9 @@ export function useOnAir() {
   void refresh();
 
   // The station changing is the one event that invalidates this immediately.
-  const stopWatch = watch(
-    () => store.activePlayer?.current_media?.title,
-    () => void refresh(),
-  );
+  // Watching the resolved name rather than a raw field means a new song on the
+  // same station does not trigger a lookup.
+  const stopWatch = watch(currentStation, () => void refresh());
 
   const stopState = watch(api.state, (state) => {
     if (state === ConnectionState.INITIALIZED) {
