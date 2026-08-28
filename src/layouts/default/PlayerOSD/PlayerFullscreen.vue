@@ -163,7 +163,10 @@
               </MarqueeText>
             </v-card-subtitle>
 
-            <!-- subtitle: artist; placeholder when empty, as above -->
+            <!-- subtitle: artist; placeholder when empty, as above.
+                 On radio the title above is the station and this line is
+                 blank, so the track actually on air takes the empty slot
+                 rather than adding a line of its own. -->
             <v-card-subtitle
               v-if="
                 store.activePlayer?.powered != false &&
@@ -175,8 +178,22 @@
               @click="onArtistClick"
             >
               <MarqueeText :sync="playerMarqueeSync">
-                {{ store.activePlayer.current_media.artist || " " }}
+                {{
+                  store.activePlayer.current_media.artist ||
+                  streamSubtitle ||
+                  " "
+                }}
               </MarqueeText>
+            </v-card-subtitle>
+
+            <!-- subtitle: show / DJ / episode blurb, when the station sends
+                 one. Only a couple of providers populate it, so no
+                 placeholder: an empty line here would be permanent. -->
+            <v-card-subtitle
+              v-if="nowPlayingStream?.description"
+              class="caption main-media-details-stream-description"
+            >
+              {{ nowPlayingStream.description }}
             </v-card-subtitle>
 
             <!-- subtitle: queue ended or empty; an active third party source
@@ -519,6 +536,7 @@ import PreviousBtn from "@/layouts/default/PlayerOSD/PlayerControlBtn/PreviousBt
 import RepeatBtn from "@/layouts/default/PlayerOSD/PlayerControlBtn/RepeatBtn.vue";
 import ShuffleBtn from "@/layouts/default/PlayerOSD/PlayerControlBtn/ShuffleBtn.vue";
 import NowPlayingSourceBadge from "@/layouts/default/PlayerOSD/NowPlayingSourceBadge.vue";
+import { useNowPlayingStream } from "@/composables/nowPlayingStream";
 import PlayerFullscreenHeaderControls from "@/layouts/default/PlayerOSD/PlayerFullscreenHeaderControls.vue";
 import PlayerVolume from "@/layouts/default/PlayerOSD/PlayerVolume.vue";
 import QueueListItem from "@/layouts/default/PlayerOSD/QueueListItem.vue";
@@ -573,6 +591,15 @@ const showAlbumSubtitle = computed(
 );
 
 const { albumSubtitle } = useNowPlayingSource();
+const { nowPlayingStream } = useNowPlayingStream();
+
+// "Artist • Song" for a live stream, matching the ordering of the artist
+// line it stands in for.
+const streamSubtitle = computed(() => {
+  const stream = nowPlayingStream.value;
+  if (!stream) return "";
+  return stream.artist ? `${stream.artist} • ${stream.title}` : stream.title;
+});
 const { getPreference, setPreference } = useUserPreferences();
 const showWaveformPref = getPreference("show_waveform", true);
 const showChapterProgress = getPreference("audiobook_chapter_progress", true);

@@ -1222,7 +1222,14 @@ export interface StreamMetadata {
   album: string | null;
   image_url: string | null;
   duration: number | null;
+  // free text the station attaches to what is on air: show name, DJ,
+  // episode blurb. Only some providers populate it.
+  description: string | null;
   uri: string | null;
+  // position within the *current track* of a live stream, which is not the
+  // same clock as the player's elapsed time in the (endless) stream
+  elapsed_time: number | null;
+  elapsed_time_last_updated: number | null; // UTC timestamp
 }
 
 export interface StreamDetails {
@@ -1367,13 +1374,22 @@ export interface PlayerMedia {
   title: string | null;
   artist: string | null;
   album: string | null;
+  album_artist: string | null;
   image_url: string | null;
   palette: MediaItemPalette | null;
   duration: number | null;
+  // length of the audio actually handed to the player, which diverges from
+  // duration after a seek on transports that restart the stream at zero;
+  // null when the two agree
+  stream_duration: number | null;
   source_id: string | null;
   elapsed_time: number | null;
   elapsed_time_last_updated: number | null;
   queue_item_id: string | null; // only set for requests from the queue controller
+  // free-form bag a provider may attach to the loaded media. The queue
+  // controller already puts "original_uri" here, so anything reading it must
+  // treat unknown keys as normal.
+  custom_data: Record<string, unknown> | null;
 }
 
 export interface PlayerSource {

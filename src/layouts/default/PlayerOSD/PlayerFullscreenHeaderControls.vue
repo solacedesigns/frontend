@@ -6,6 +6,10 @@
     <!-- streaming quality details chip (moved up from under the track info) -->
     <QualityDetailsBtn v-if="hasActiveAudioPath" pill />
 
+    <!-- Listening Habits ingest health; renders nothing on a server without
+         the provider, so it costs a stock build nothing -->
+    <ListeningHabitsBtn pill />
+
     <!-- lyrics: available -> clickable toggle (fully primary while the panel is open) -->
     <TooltipProvider v-if="lyricsState === 'available'" :delay-duration="200">
       <Tooltip>
@@ -167,6 +171,7 @@
 
 <script setup lang="ts">
 import QualityDetailsBtn from "@/components/QualityDetailsBtn.vue";
+import ListeningHabitsBtn from "@/components/ListeningHabitsBtn.vue";
 import ShowDashboardButton from "@/components/ShowDashboardButton.vue";
 import SleepTimerBtn from "@/layouts/default/PlayerOSD/PlayerControlBtn/SleepTimerBtn.vue";
 import { Button } from "@/components/ui/button";

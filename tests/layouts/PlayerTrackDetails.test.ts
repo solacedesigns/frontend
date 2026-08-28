@@ -26,15 +26,22 @@ vi.mock("@/layouts/default/PlayerOSD/PlayerFullscreen.vue", () => ({
 // QualityDetailsBtn's audio-processing chain imports ProviderIcon, which
 // needs the real api singleton; stub it since it is never shown here
 // (showQualityDetailsBtn is false in every test below).
-vi.mock("@/plugins/api", () => {
+vi.mock("@/plugins/api", async () => {
+  // ref() has to come from importActual: the factory is hoisted above this
+  // file's own imports, so the top-level `ref` is not initialised yet.
+  const { ref: mockRef } = await vi.importActual<typeof import("vue")>("vue");
   const api = {
     players: {},
     queues: {},
     queueElapsedTime: {},
     providers: {},
     providerManifests: {},
+    // never INITIALIZED, so the Listening Habits chip's status poll stays
+    // parked and this suite makes no server calls
+    state: mockRef("disconnected"),
+    sendCommand: vi.fn(),
   };
-  return { api, default: api };
+  return { api, default: api, ConnectionState: { INITIALIZED: "initialized" } };
 });
 
 vi.mock("@/composables/useServerTime", () => ({

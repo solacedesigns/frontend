@@ -128,13 +128,16 @@ function createPlayerMedia(overrides: Partial<PlayerMedia> = {}): PlayerMedia {
     title: null,
     artist: null,
     album: null,
+    album_artist: null,
     image_url: null,
     palette: null,
     duration: null,
+    stream_duration: null,
     source_id: null,
     elapsed_time: null,
     elapsed_time_last_updated: null,
     queue_item_id: null,
+    custom_data: null,
     ...overrides,
   };
 }

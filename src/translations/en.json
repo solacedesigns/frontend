@@ -2406,5 +2406,17 @@
     "command_center_navigate": "navigate",
     "command_center_open": "open",
     "command_center_keep_typing": "Keep typing to search...",
-    "screens": "Screens"
+    "screens": "Screens",
+    "listening_habits": {
+        "title": "Listening Habits",
+        "details": "Show Listening Habits status",
+        "logging": "Logging",
+        "not_logging": "Not logging",
+        "queued_count": "{count} queued",
+        "queued": "Queued",
+        "logged_total": "Logged this session",
+        "failed_total": "Failed",
+        "last_logged": "Last logged",
+        "endpoint": "Server"
+    }
 }

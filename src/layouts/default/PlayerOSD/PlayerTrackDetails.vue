@@ -109,6 +109,9 @@
       >
         <QualityDetailsBtn />
       </div>
+      <div v-if="!getBreakpointValue({ breakpoint: 'phone' })" class="pl-2">
+        <ListeningHabitsBtn />
+      </div>
     </template>
     <!-- subtitle: off state or artist(s) + album, led by the active source -->
     <template #subtitle>
@@ -174,6 +177,27 @@
               </MarqueeText>
             </div>
           </div>
+          <!-- live stream: the title above is the station, which never changes
+               as songs go by. The song actually on air only exists on the
+               queue item's stream metadata, so this is the one place it can be
+               read. Last in the chain, so it only fills a slot that the track
+               metadata above left empty. -->
+          <div
+            v-else-if="nowPlayingStream"
+            class="player-track-subtitle-text"
+            style="cursor: pointer"
+            @click.stop="store.showFullscreenPlayer = true"
+          >
+            <div class="ma-line-clamp-1">
+              <MarqueeText :sync="marqueeSync">
+                <span v-if="nowPlayingStream.artist">
+                  {{ nowPlayingStream.artist }} &bull;
+                  {{ nowPlayingStream.title }}
+                </span>
+                <span v-else>{{ nowPlayingStream.title }}</span>
+              </MarqueeText>
+            </div>
+          </div>
         </div>
         <!-- the full bar has the height for the source to take a line of its
              own under the track metadata; plain, so it aligns with the text
@@ -193,6 +217,7 @@
 import MarqueeText from "@/components/MarqueeText.vue";
 import PlayerIcon from "@/components/PlayerIcon.vue";
 import QualityDetailsBtn from "@/components/QualityDetailsBtn.vue";
+import ListeningHabitsBtn from "@/components/ListeningHabitsBtn.vue";
 import { MarqueeTextSync } from "@/helpers/marquee_text_sync";
 import { openCurrentTrackDetails } from "@/helpers/now_playing";
 import { isQueueEnded } from "@/helpers/queue_position";
@@ -206,6 +231,7 @@ import { computed, onUnmounted, ref, watch } from "vue";
 import { useUserPreferences } from "@/composables/userPreferences";
 import { useActiveAudioPath } from "@/composables/useActiveAudioPath";
 import { useNowPlayingSource } from "@/composables/nowPlayingSource";
+import { useNowPlayingStream } from "@/composables/nowPlayingStream";
 import NowPlayingSourceBadge from "./NowPlayingSourceBadge.vue";
 import PlayerFullscreen from "./PlayerFullscreen.vue";
 
@@ -259,6 +285,7 @@ onUnmounted(() => updateChapterTimer(false));
 const queueEnded = computed(() => isQueueEnded(store.activePlayerQueue));
 
 const { albumSubtitle } = useNowPlayingSource();
+const { nowPlayingStream } = useNowPlayingStream();
 const { hasActiveAudioPath } = useActiveAudioPath();
 
 // properties
