@@ -186,14 +186,16 @@
               </MarqueeText>
             </v-card-subtitle>
 
-            <!-- subtitle: show / DJ / episode blurb, when the station sends
-                 one. Only a couple of providers populate it, so no
-                 placeholder: an empty line here would be permanent. -->
+            <!-- subtitle: show / DJ / episode blurb. Either the station
+                 sent one in its stream metadata, or the log server knows
+                 who is on air. No placeholder: for most stations neither
+                 source has an answer and the line would be permanently
+                 blank. -->
             <v-card-subtitle
-              v-if="nowPlayingStream?.description"
+              v-if="showLine"
               class="caption main-media-details-stream-description"
             >
-              {{ nowPlayingStream.description }}
+              {{ showLine }}
             </v-card-subtitle>
 
             <!-- subtitle: queue ended or empty; an active third party source
@@ -537,6 +539,7 @@ import RepeatBtn from "@/layouts/default/PlayerOSD/PlayerControlBtn/RepeatBtn.vu
 import ShuffleBtn from "@/layouts/default/PlayerOSD/PlayerControlBtn/ShuffleBtn.vue";
 import NowPlayingSourceBadge from "@/layouts/default/PlayerOSD/NowPlayingSourceBadge.vue";
 import { useNowPlayingStream } from "@/composables/nowPlayingStream";
+import { useOnAir } from "@/composables/useOnAir";
 import PlayerFullscreenHeaderControls from "@/layouts/default/PlayerOSD/PlayerFullscreenHeaderControls.vue";
 import PlayerVolume from "@/layouts/default/PlayerOSD/PlayerVolume.vue";
 import QueueListItem from "@/layouts/default/PlayerOSD/QueueListItem.vue";
@@ -592,6 +595,13 @@ const showAlbumSubtitle = computed(
 
 const { albumSubtitle } = useNowPlayingSource();
 const { nowPlayingStream } = useNowPlayingStream();
+const { onAirLabel } = useOnAir();
+
+// Who is presenting, preferred over the station's own blurb: the schedule
+// names a person and an hour, the blurb is usually a channel description.
+const showLine = computed(
+  () => onAirLabel.value || nowPlayingStream.value?.description || "",
+);
 
 // "Artist • Song" for a live stream, matching the ordering of the artist
 // line it stands in for.

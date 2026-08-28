@@ -20,8 +20,18 @@ vi.mock("@/plugins/api", async () => {
     getTrackLyrics: vi.fn<MusicAssistantApi["getTrackLyrics"]>(),
     playerCommandSeek: vi.fn<MusicAssistantApi["playerCommandSeek"]>(),
     playMedia: vi.fn<MusicAssistantApi["playMedia"]>(),
+    sendCommand: vi.fn(),
+    // Deliberately a bare { value }, not a ref(): reactive() unwraps refs on
+    // read, so a real ref here would arrive at consumers as a plain string
+    // and break `api.state.value`. Left disconnected so the on-air lookup
+    // stays inert -- this file is not testing it.
+    state: { value: "disconnected" },
   });
-  return { api, default: api };
+  return {
+    api,
+    default: api,
+    ConnectionState: { INITIALIZED: "initialized" },
+  };
 });
 
 vi.mock("@/plugins/store", async () => {
