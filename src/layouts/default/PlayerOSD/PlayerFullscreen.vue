@@ -521,6 +521,7 @@ import { setStatusBarColorOverride } from "@/composables/useStatusBarColor";
 import { useUserPreferences } from "@/composables/userPreferences";
 import { useVisualizer } from "@/composables/visualizer/useVisualizer";
 import { playbackSpeedSupported } from "@/helpers/elapsed";
+import { stripLrcTimestamps } from "@/helpers/lrcParser";
 import { MarqueeTextSync } from "@/helpers/marquee_text_sync";
 import { openCurrentTrackDetails } from "@/helpers/now_playing";
 import { getPlayerMenuItems } from "@/helpers/player_menu_items";
@@ -717,6 +718,49 @@ watch(
   },
 );
 
+// What to look lyrics up for. Normally the queue item's own track, but live radio
+// has no media item at all -- only the text the station's now-playing feed puts on
+// the stream metadata. That text carries everything the lyrics providers match on,
+// so it is worth looking up even though there is nothing in the library.
+type LyricsSubject =
+  | { kind: "track"; track: Track }
+  | {
+      kind: "stream";
+      title: string;
+      artist: string;
+      album?: string;
+      duration?: number;
+    };
+
+const lyricsSubject = computed<LyricsSubject | null>(() => {
+  const queueItem = store.curQueueItem;
+  if (!queueItem) return null;
+  const mediaItem = queueItem.media_item;
+  if (mediaItem?.media_type === MediaType.TRACK)
+    return { kind: "track", track: mediaItem as Track };
+  const streamMeta = queueItem.streamdetails?.stream_metadata;
+  if (streamMeta?.title && streamMeta.artist) {
+    return {
+      kind: "stream",
+      title: streamMeta.title,
+      artist: streamMeta.artist,
+      album: streamMeta.album ?? undefined,
+      duration: streamMeta.duration ?? undefined,
+    };
+  }
+  return null;
+});
+
+// A radio queue item keeps the same id for the whole station, so the song on air
+// is identified by its name instead. Watching this refetches when it changes.
+const lyricsSubjectKey = computed(() => {
+  const subject = lyricsSubject.value;
+  if (!subject) return null;
+  return subject.kind === "track"
+    ? `track:${subject.track.item_id}`
+    : `stream:${subject.artist} - ${subject.title}`;
+});
+
 // Local reactive state for lyrics
 const currentLyrics = ref<{ plain: string | null; synced: string | null }>({
   plain: null,
@@ -741,9 +785,9 @@ const lyricsState = computed<
   "available" | "loading" | "unavailable-song" | "none"
 >(() => {
   if (!store.curQueueItem) return "none";
-  // Lyrics only make sense for tracks; hide the button entirely otherwise.
-  if (store.curQueueItem.media_item?.media_type !== MediaType.TRACK)
-    return "none";
+  // Lyrics need something to look up: a track, or a stream saying what is on air.
+  // Hide the button entirely otherwise.
+  if (!lyricsSubject.value) return "none";
   if (lyricsLoading.value) return "loading";
   if (hasLyrics.value) return "available";
   return "unavailable-song";
@@ -832,6 +876,10 @@ const {
 const ACCURATE_TIME_PROTOCOLS = ["airplay"];
 
 const showLyricsOffset = computed(() => {
+  // The offset shifts timed lines against the clock, so it has nothing to act on
+  // when the lyrics are untimed -- as they always are for a live stream, whose
+  // clock counts the stream rather than the song.
+  if (!currentLyrics.value.synced) return false;
   const player = store.activePlayer;
   if (!player) return false;
   let domain: string | undefined;
@@ -860,42 +908,64 @@ const fetchLyrics = async () => {
   // Clear lyrics immediately
   currentLyrics.value = { plain: null, synced: null };
 
-  const mediaItem = store.curQueueItem?.media_item;
-  const isTrack = mediaItem?.media_type === MediaType.TRACK;
+  const subject = lyricsSubject.value;
 
-  // Show the loading state right away for tracks so the header button doesn't
-  // flash "unavailable" before we've looked the lyrics up.
-  lyricsLoading.value = isTrack === true && store.showFullscreenPlayer;
+  // Show the loading state right away so the header button doesn't flash
+  // "unavailable" before we've looked the lyrics up.
+  lyricsLoading.value = !!subject && store.showFullscreenPlayer;
 
-  // Only fetch lyrics when fullscreen player is open and the item is a track.
-  if (!store.showFullscreenPlayer || !isTrack) {
+  // Only fetch lyrics when the fullscreen player is open and we know what to ask for.
+  if (!store.showFullscreenPlayer || !subject) {
     lyricsLoading.value = false;
     return;
   }
 
-  const track = mediaItem as Track;
+  // Check if lyrics are already in metadata. Only a real track carries any;
+  // a stream names a song without holding anything about it.
+  if (subject.kind === "track") {
+    const existingPlain = subject.track.metadata.lyrics?.trim() || null;
+    const existingSynced = subject.track.metadata.lrc_lyrics?.trim() || null;
 
-  // Check if lyrics are already in metadata
-  const existingPlain = track.metadata.lyrics?.trim() || null;
-  const existingSynced = track.metadata.lrc_lyrics?.trim() || null;
-
-  if (existingPlain || existingSynced) {
-    currentLyrics.value = { plain: existingPlain, synced: existingSynced };
-    lyricsLoading.value = false;
-    return;
+    if (existingPlain || existingSynced) {
+      currentLyrics.value = { plain: existingPlain, synced: existingSynced };
+      lyricsLoading.value = false;
+      return;
+    }
   }
 
   // Fetch lyrics from API
   try {
-    const [lyrics, lrcLyrics] = await api.getTrackLyrics(track);
+    const [lyrics, lrcLyrics] =
+      subject.kind === "track"
+        ? await api.getTrackLyrics(subject.track)
+        : // The album a station reports is often not the one the lyrics database
+          // filed the song under, and a mismatch loses the match outright, so ask
+          // on artist and title alone.
+          await api.getLyricsByName(
+            subject.title,
+            subject.artist,
+            undefined,
+            subject.duration,
+          );
     // a newer track change started while awaiting; this result is stale
     if (generation !== lyricsLoadGeneration) return;
+
+    if (subject.kind === "stream") {
+      // Most lyrics come back timed, but nothing tells us where the song started
+      // inside the stream, so show the words without trying to follow them.
+      currentLyrics.value = {
+        plain: stripLrcTimestamps(lrcLyrics) ?? lyrics,
+        synced: null,
+      };
+      return;
+    }
+
     currentLyrics.value = { plain: lyrics, synced: lrcLyrics };
 
     // Also update the media item's metadata for future reference
     if (lyrics || lrcLyrics) {
-      track.metadata = {
-        ...track.metadata,
+      subject.track.metadata = {
+        ...subject.track.metadata,
         ...(lyrics && { lyrics }),
         ...(lrcLyrics && { lrc_lyrics: lrcLyrics }),
       };
@@ -908,8 +978,9 @@ const fetchLyrics = async () => {
   }
 };
 
-// Watch for track changes and handle lyrics
-watch(() => store.curQueueItem?.media_item?.item_id, fetchLyrics, {
+// Watch for song changes and handle lyrics. Keyed on the subject rather than the
+// queue item, because a radio stream keeps one item while the song on air changes.
+watch(lyricsSubjectKey, fetchLyrics, {
   immediate: true,
 });
 

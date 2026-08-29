@@ -1388,6 +1388,25 @@ export class MusicAssistantApi {
     });
   }
 
+  public getLyricsByName(
+    title: string,
+    artist: string,
+    album?: string,
+    duration?: number,
+  ): Promise<[string | null, string | null]> {
+    // Get lyrics for a track known only by name, as with a live radio stream
+    // where there is no media item to look up.
+    // Album narrows the search, so omit it when the name comes from a station
+    // feed that may title the release differently than the lyrics database.
+    // Returns a tuple of (lyrics, lrc_lyrics) - plain text and synced lyrics.
+    return this.sendCommand("metadata/get_lyrics_by_name", {
+      title,
+      artist,
+      album,
+      duration,
+    });
+  }
+
   public getWaveForm(
     item_id: string,
     provider_instance_id_or_domain: string,
