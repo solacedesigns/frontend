@@ -2417,6 +2417,7 @@
         "logged_total": "Logged this session",
         "failed_total": "Failed",
         "last_logged": "Last logged",
+        "last_logged_at": "Logged at",
         "endpoint": "Server",
         "weather": {
             "title": "Current weather",

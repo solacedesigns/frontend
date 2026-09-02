@@ -40,6 +40,10 @@
               {{ status.last_logged.title }}
             </dd>
           </div>
+          <div v-if="status?.last_logged?.at">
+            <dt>{{ $t("listening_habits.last_logged_at") }}</dt>
+            <dd>{{ formatLoggedAt(status.last_logged.at) }}</dd>
+          </div>
           <div>
             <dt>{{ $t("listening_habits.logged_total") }}</dt>
             <dd>{{ status?.logged_total ?? 0 }}</dd>
@@ -77,6 +81,12 @@ import { useListeningHabits } from "@/composables/useListeningHabits";
 defineProps<{ pill?: boolean }>();
 
 const { status, available } = useListeningHabits();
+
+const formatLoggedAt = (timestamp: number) =>
+  new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "medium",
+  }).format(new Date(timestamp * 1000));
 
 // Amber, not red, for a backlog: nothing is lost, the retry loop owns it and
 // will drain it. Red is reserved for pushes that actually failed.
