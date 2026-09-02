@@ -112,6 +112,9 @@
       <div v-if="!getBreakpointValue({ breakpoint: 'phone' })" class="pl-2">
         <ListeningHabitsBtn />
       </div>
+      <div v-if="!getBreakpointValue({ breakpoint: 'phone' })" class="pl-2">
+        <ListeningHabitsWeatherBtn compact />
+      </div>
     </template>
     <!-- subtitle: off state or artist(s) + album, led by the active source -->
     <template #subtitle>
@@ -218,6 +221,7 @@ import MarqueeText from "@/components/MarqueeText.vue";
 import PlayerIcon from "@/components/PlayerIcon.vue";
 import QualityDetailsBtn from "@/components/QualityDetailsBtn.vue";
 import ListeningHabitsBtn from "@/components/ListeningHabitsBtn.vue";
+import ListeningHabitsWeatherBtn from "@/components/ListeningHabitsWeatherBtn.vue";
 import { MarqueeTextSync } from "@/helpers/marquee_text_sync";
 import { openCurrentTrackDetails } from "@/helpers/now_playing";
 import { isQueueEnded } from "@/helpers/queue_position";

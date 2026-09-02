@@ -2417,6 +2417,18 @@
         "logged_total": "Logged this session",
         "failed_total": "Failed",
         "last_logged": "Last logged",
-        "endpoint": "Server"
+        "endpoint": "Server",
+        "weather": {
+            "title": "Current weather",
+            "condition": "Condition",
+            "feels_like": "Feels like",
+            "precipitation": "Precipitation",
+            "wind": "Wind",
+            "cloud_cover": "Cloud cover",
+            "source": "Source",
+            "none": "None",
+            "observed": "Observed {time}",
+            "observed_unknown": "Observation time unavailable"
+        }
     }
 }

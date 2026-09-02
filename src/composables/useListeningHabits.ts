@@ -13,6 +13,20 @@ export interface ListeningHabitsStatus {
   last_result: string | null;
   last_error: string | null;
   last_logged: { artist?: string; title?: string; at?: number } | null;
+  weather: ListeningHabitsWeather | null;
+  weather_entity: string | null;
+  weather_source: string | null;
+}
+
+export interface ListeningHabitsWeather {
+  weather_observed_at: number;
+  weather_temperature_c: number;
+  weather_apparent_temperature_c: number | null;
+  weather_condition: string | null;
+  weather_precipitation: string | null;
+  weather_symbol: string | null;
+  weather_cloud_cover_pct: number | null;
+  weather_wind_kph: number | null;
 }
 
 const REFRESH_MS = 30000;
