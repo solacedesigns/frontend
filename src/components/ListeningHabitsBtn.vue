@@ -109,6 +109,10 @@ const ariaLabel = computed(
 </script>
 
 <style scoped>
+.listening-habits-popover {
+  width: min(28rem, calc(100vw - 16px));
+}
+
 .listening-habits-dot {
   display: inline-block;
   width: 8px;
@@ -142,6 +146,7 @@ const ariaLabel = computed(
 
 .listening-habits-stats dt {
   opacity: 0.7;
+  white-space: nowrap;
 }
 
 .listening-habits-stats dd {
@@ -154,5 +159,13 @@ const ariaLabel = computed(
 .listening-habits-endpoint {
   font-family: monospace;
   font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .listening-habits-endpoint {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
 }
 </style>
