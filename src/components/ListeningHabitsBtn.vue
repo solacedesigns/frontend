@@ -20,7 +20,7 @@
       :side="pill ? 'bottom' : 'top'"
       align="center"
       :collision-padding="8"
-      class="listening-habits-popover !w-[calc(100vw-16px)] max-w-[calc(100vw-16px)] sm:!w-[28rem]"
+      class="listening-habits-popover"
       :aria-label="$t('listening_habits.details')"
     >
       <div class="listening-habits-body">
@@ -109,6 +109,11 @@ const ariaLabel = computed(
 </script>
 
 <style scoped>
+:global(.listening-habits-popover[data-slot="popover-content"]) {
+  width: min(28rem, calc(100vw - 16px)) !important;
+  max-width: calc(100vw - 16px) !important;
+}
+
 .listening-habits-dot {
   display: inline-block;
   width: 8px;
