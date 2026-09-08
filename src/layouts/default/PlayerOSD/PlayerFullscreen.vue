@@ -481,23 +481,26 @@
                hover:text-accent-foreground survives the class merge and recolours
                the label against the artwork, so the hover colour is pinned to
                the --text-color the rest of the panel follows. -->
-          <Button
-            id="fullscreen-player-select-button"
-            variant="outline"
-            size="xs"
-            class="border-transparent bg-background/40 shadow-none backdrop-blur-md hover:bg-background/60 hover:text-[var(--text-color)] dark:border-transparent dark:bg-background/40 dark:hover:bg-background/60"
-            :aria-label="playerSelectLabel"
-            :aria-expanded="store.showPlayersMenu"
-            aria-haspopup="dialog"
-            @click="store.showPlayersMenu = true"
-          >
-            <PlayerIcon
-              :icon="store.activePlayer?.icon"
-              :size="20"
-              class="mr-1"
-            />
-            {{ store.activePlayer ? getPlayerName(store.activePlayer) : "" }}
-          </Button>
+          <div class="fullscreen-player-select-row">
+            <Button
+              id="fullscreen-player-select-button"
+              variant="outline"
+              size="xs"
+              class="border-transparent bg-background/40 shadow-none backdrop-blur-md hover:bg-background/60 hover:text-[var(--text-color)] dark:border-transparent dark:bg-background/40 dark:hover:bg-background/60"
+              :aria-label="playerSelectLabel"
+              :aria-expanded="store.showPlayersMenu"
+              aria-haspopup="dialog"
+              @click="store.showPlayersMenu = true"
+            >
+              <PlayerIcon
+                :icon="store.activePlayer?.icon"
+                :size="20"
+                class="mr-1"
+              />
+              {{ store.activePlayer ? getPlayerName(store.activePlayer) : "" }}
+            </Button>
+            <ListeningHabitsWeatherBtn v-if="store.mobileLayout" compact />
+          </div>
         </div>
       </div>
 
@@ -511,6 +514,7 @@ import LyricsViewer from "@/components/LyricsViewer.vue";
 import MarqueeText from "@/components/MarqueeText.vue";
 import PanelDragHandle from "@/components/PanelDragHandle.vue";
 import PlayerIcon from "@/components/PlayerIcon.vue";
+import ListeningHabitsWeatherBtn from "@/components/ListeningHabitsWeatherBtn.vue";
 import VisualizerCanvas from "@/components/VisualizerCanvas.vue";
 import { Button } from "@/components/ui/button";
 import { useLyricsElapsedTime } from "@/composables/lyrics/useLyricsElapsedTime";
@@ -1703,6 +1707,14 @@ onBeforeUnmount(() => {
   position: unset !important;
   padding-bottom: max(var(--device-inset-bottom), min(3%, 3vh));
   width: 100%;
+}
+
+.fullscreen-player-select-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 100%;
 }
 
 .track-info {

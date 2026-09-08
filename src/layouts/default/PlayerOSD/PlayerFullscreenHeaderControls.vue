@@ -10,7 +10,7 @@
          the provider, so it costs a stock build nothing -->
     <ListeningHabitsBtn pill />
     <ListeningHabitsMarksBtn pill />
-    <ListeningHabitsWeatherBtn pill />
+    <ListeningHabitsWeatherBtn v-if="!store.mobileLayout" pill />
 
     <!-- lyrics: available -> clickable toggle (fully primary while the panel is open) -->
     <TooltipProvider v-if="lyricsState === 'available'" :delay-duration="200">
