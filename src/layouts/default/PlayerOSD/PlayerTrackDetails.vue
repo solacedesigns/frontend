@@ -113,6 +113,9 @@
         <ListeningHabitsBtn />
       </div>
       <div v-if="!getBreakpointValue({ breakpoint: 'phone' })" class="pl-2">
+        <ListeningHabitsMarksBtn />
+      </div>
+      <div v-if="!getBreakpointValue({ breakpoint: 'phone' })" class="pl-2">
         <ListeningHabitsWeatherBtn compact />
       </div>
     </template>
@@ -221,6 +224,7 @@ import MarqueeText from "@/components/MarqueeText.vue";
 import PlayerIcon from "@/components/PlayerIcon.vue";
 import QualityDetailsBtn from "@/components/QualityDetailsBtn.vue";
 import ListeningHabitsBtn from "@/components/ListeningHabitsBtn.vue";
+import ListeningHabitsMarksBtn from "@/components/ListeningHabitsMarksBtn.vue";
 import ListeningHabitsWeatherBtn from "@/components/ListeningHabitsWeatherBtn.vue";
 import { MarqueeTextSync } from "@/helpers/marquee_text_sync";
 import { openCurrentTrackDetails } from "@/helpers/now_playing";

@@ -9,6 +9,7 @@
     <!-- Listening Habits ingest health; renders nothing on a server without
          the provider, so it costs a stock build nothing -->
     <ListeningHabitsBtn pill />
+    <ListeningHabitsMarksBtn pill />
     <ListeningHabitsWeatherBtn pill />
 
     <!-- lyrics: available -> clickable toggle (fully primary while the panel is open) -->
@@ -173,6 +174,7 @@
 <script setup lang="ts">
 import QualityDetailsBtn from "@/components/QualityDetailsBtn.vue";
 import ListeningHabitsBtn from "@/components/ListeningHabitsBtn.vue";
+import ListeningHabitsMarksBtn from "@/components/ListeningHabitsMarksBtn.vue";
 import ListeningHabitsWeatherBtn from "@/components/ListeningHabitsWeatherBtn.vue";
 import ShowDashboardButton from "@/components/ShowDashboardButton.vue";
 import SleepTimerBtn from "@/layouts/default/PlayerOSD/PlayerControlBtn/SleepTimerBtn.vue";

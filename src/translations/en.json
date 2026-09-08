@@ -2419,6 +2419,19 @@
         "last_logged": "Last logged",
         "last_logged_at": "Logged at",
         "endpoint": "Server",
+        "marks": {
+            "favorite": "Favorite",
+            "favorite_add": "Save to Listening Habits favorites",
+            "favorite_remove": "Remove from Listening Habits favorites",
+            "dislike": "Dislike",
+            "dislike_add": "Dislike this song",
+            "dislike_remove": "Remove dislike from this song",
+            "memory": "Memory",
+            "memory_add": "Keep this play as a memory",
+            "memory_remove": "Remove this play from memories",
+            "memory_waiting": "Memory will be available once this play is logged",
+            "failed": "Could not update Listening Habits"
+        },
         "weather": {
             "title": "Current weather",
             "condition": "Condition",
