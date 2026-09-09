@@ -2419,6 +2419,16 @@
         "last_logged": "Last logged",
         "last_logged_at": "Logged at",
         "endpoint": "Server",
+        "stats": {
+            "title": "Listening stats",
+            "loading": "Loading listening stats…",
+            "listens": "{count} listens",
+            "first": "First listen",
+            "last": "Last listen",
+            "hours": "Hours listened",
+            "none": "No logged listens yet",
+            "unknown": "Unknown"
+        },
         "marks": {
             "favorite": "Favorite",
             "favorite_add": "Save to Listening Habits favorites",

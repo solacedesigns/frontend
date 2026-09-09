@@ -425,6 +425,10 @@
           >
             <slot name="after-play"></slot>
           </div>
+          <ListeningHabitsStats
+            v-if="item && item.media_type !== MediaType.COLLECTION"
+            :item="item"
+          />
           <!-- Description/metadata -->
           <v-card-subtitle
             v-if="shortDescription"
@@ -492,6 +496,7 @@
 
 <script setup lang="ts">
 import AudioAnalysisMetadata from "@/components/AudioAnalysisMetadata.vue";
+import ListeningHabitsStats from "@/components/ListeningHabitsStats.vue";
 import MarkdownText from "@/components/MarkdownText.vue";
 import Toolbar from "@/components/Toolbar.vue";
 import { Button } from "@/components/ui/button";
