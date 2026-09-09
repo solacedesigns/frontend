@@ -40,6 +40,7 @@ import { useListeningHabits } from "@/composables/useListeningHabits";
 
 interface DetailSummary {
   listens?: number;
+  days?: number;
   first_played_at?: number | null;
   last_played_at?: number | null;
   listened_seconds?: number | null;
@@ -155,11 +156,19 @@ const lastListen = computed(() =>
   formatTimestamp(summary.value?.last_played_at),
 );
 
+function formatHours(value: number) {
+  return value < 10 ? value.toFixed(1) : String(Math.round(value));
+}
+
 const hoursListened = computed(() => {
-  const seconds = Number(summary.value?.listened_seconds ?? 0);
-  if (!seconds) return "0 h";
+  const seconds = Math.max(0, Number(summary.value?.listened_seconds ?? 0));
+  const days = Math.max(1, Number(summary.value?.days ?? 0));
   const hours = seconds / 3600;
-  return `${hours < 10 ? hours.toFixed(1) : Math.round(hours)} h`;
+  const perDay = hours / days;
+  return $t("listening_habits.stats.hours_value", {
+    hours: formatHours(hours),
+    perDay: formatHours(perDay),
+  });
 });
 </script>
 

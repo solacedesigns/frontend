@@ -2426,6 +2426,7 @@
             "first": "First listen",
             "last": "Last listen",
             "hours": "Hours listened",
+            "hours_value": "{hours} hours ({perDay} hours/day)",
             "none": "No logged listens yet",
             "unknown": "Unknown"
         },
