@@ -1135,6 +1135,29 @@ export type PlayableMediaItemType =
   | PodcastEpisode;
 export type MediaItemTypeOrItemMapping = MediaItemType | ItemMapping;
 
+export interface SetlistFmTrackCandidate {
+  uri: string;
+  name: string;
+  artists: string[];
+  album?: string | null;
+}
+
+export interface SetlistFmPreviewTrack {
+  name: string;
+  info?: string | null;
+  cover_artist?: string | null;
+  candidates: SetlistFmTrackCandidate[];
+}
+
+export interface SetlistFmPreview {
+  artist: string;
+  venue: string;
+  event_date: string;
+  playlist_name: string;
+  provider_instance_id: string;
+  tracks: SetlistFmPreviewTrack[];
+}
+
 export interface SearchResults {
   artists: Artist[];
   albums: Album[];

@@ -68,6 +68,7 @@ import {
   RemoteAccessInfo,
   RepeatMode,
   SearchResults,
+  type SetlistFmPreview,
   SmartPlaylistRules,
   SoundEffect,
   UserRole,
@@ -938,6 +939,19 @@ export class MusicAssistantApi {
       library_matching,
       match_providers,
     });
+  }
+
+  public previewSetlistFm(
+    url: string,
+    provider_instance_id: string,
+  ): Promise<SetlistFmPreview> {
+    return this.sendCommand<SetlistFmPreview>(
+      "music/playlists/setlistfm_preview",
+      {
+        url,
+        provider_instance_id,
+      },
+    );
   }
 
   public createSmartPlaylist(

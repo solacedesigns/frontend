@@ -68,6 +68,8 @@ export type CreateSmartPlaylistEvent = {
   providerId?: string;
 };
 
+export type CreateSetlistFmPlaylistEvent = Record<string, never>;
+
 export type AudioOverlayDialogEvent = {
   queueId: string;
 };
@@ -108,6 +110,7 @@ export type Events = {
   playerGroupPlaybackDialog: PlayerGroupPlaybackDialogEvent;
   linkGenreDialog: LinkGenreDialogEvent;
   importPlaylistDialog: ImportPlaylistEvent;
+  createSetlistFmPlaylist: CreateSetlistFmPlaylistEvent;
   createSmartPlaylist: CreateSmartPlaylistEvent;
   audioOverlayDialog: AudioOverlayDialogEvent;
   playAnnouncementDialog: PlayAnnouncementDialogEvent;

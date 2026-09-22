@@ -152,6 +152,12 @@ onMounted(() => {
     icon: Import,
     overflowAllowed: true,
   });
+  extraMenuItems.value.push({
+    label: "create_playlist_from_setlistfm",
+    action: () => eventbus.emit("createSetlistFmPlaylist", {}),
+    icon: ListPlus,
+    overflowAllowed: true,
+  });
   // signal if/when items get added/updated/removed within this library
   const unsub = api.subscribe_multi(
     [

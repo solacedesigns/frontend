@@ -22,6 +22,7 @@
           <create-playlist-dialog />
           <create-smart-playlist-dialog />
           <import-playlist-dialog />
+          <create-from-setlist-fm-dialog />
           <play-announcement-dialog />
           <merge-genre-dialog />
           <delete-genre-dialog />
@@ -70,6 +71,7 @@ import AddToPlaylistDialog from "./AddToPlaylistDialog.vue";
 import AudioOverlayDialog from "./AudioOverlayDialog.vue";
 import CreatePlaylistDialog from "./CreatePlaylistDialog.vue";
 import CreateSmartPlaylistDialog from "./CreateSmartPlaylistDialog.vue";
+import CreateFromSetlistFmDialog from "./CreateFromSetlistFmDialog.vue";
 import ImportPlaylistDialog from "./ImportPlaylistDialog.vue";
 import ItemContextMenu from "./ItemContextMenu.vue";
 import PlayAnnouncementDialog from "./PlayAnnouncementDialog.vue";
