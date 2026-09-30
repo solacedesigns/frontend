@@ -15,6 +15,10 @@
       class="fullscreen-player-card"
       :style="{ background: backgroundColor }"
     >
+      <ArtworkBackdrop
+        v-if="artworkBackgroundVisible"
+        :artwork-url="artworkBackgroundUrl"
+      />
       <VisualizerCanvas
         v-if="store.showFullscreenPlayer && visualizerActive"
         :preset="visualizerPresetPref"
@@ -539,10 +543,12 @@ import ListeningHabitsWeatherBtn from "@/components/ListeningHabitsWeatherBtn.vu
 import VisualizerCanvas from "@/components/VisualizerCanvas.vue";
 import VinylArtwork from "@/components/VinylArtwork.vue";
 import VinylTrackDetails from "@/components/VinylTrackDetails.vue";
+import ArtworkBackdrop from "@/components/ArtworkBackdrop.vue";
 import { Button } from "@/components/ui/button";
 import { useLyricsElapsedTime } from "@/composables/lyrics/useLyricsElapsedTime";
 import { useLyricsOffset } from "@/composables/lyrics/useLyricsOffset";
 import { useActiveTrackWaveform } from "@/composables/useActiveTrackWaveform";
+import { useArtworkBackground } from "@/composables/useArtworkBackground";
 import { useCommandCenter } from "@/composables/useCommandCenter";
 import { setStatusBarColorOverride } from "@/composables/useStatusBarColor";
 import { useUserPreferences } from "@/composables/userPreferences";
@@ -627,6 +633,12 @@ const { albumSubtitle } = useNowPlayingSource();
 const { nowPlayingStream } = useNowPlayingStream();
 const { onAirLabel } = useOnAir();
 const { vinyl } = useVinylNowPlaying();
+const {
+  enabled: artworkBackgroundEnabled,
+  artworkUrl: artworkBackgroundUrl,
+  visible: artworkBackgroundVisible,
+  toggle: toggleArtworkBackground,
+} = useArtworkBackground(vinyl, () => store.showFullscreenPlayer);
 
 // Who is presenting, preferred over the station's own blurb: the schedule
 // names a person and an hour, the blurb is usually a channel description.
@@ -1323,6 +1335,12 @@ const openQueueMenu = function (evt: Event) {
   }
   // The waveform toggle slots in above the visualizer popout entry (which
   // comes from getPlayerMenuItems), keeping the display entries grouped.
+  const artworkBackgroundItem = {
+    label: "settings.artwork_background.label",
+    action: toggleArtworkBackground,
+    icon: "mdi-palette-outline",
+    selected: artworkBackgroundEnabled.value,
+  };
   const waveformItem = {
     label: "settings.show_waveform.label",
     action: () => {
@@ -1336,9 +1354,14 @@ const openQueueMenu = function (evt: Event) {
     (item) => item.label === "settings.visualizer_enabled.label",
   );
   if (visualizerEntryIndex === -1) {
-    menuItems.push(waveformItem);
+    menuItems.push(artworkBackgroundItem, waveformItem);
   } else {
-    menuItems.splice(visualizerEntryIndex, 0, waveformItem);
+    menuItems.splice(
+      visualizerEntryIndex,
+      0,
+      artworkBackgroundItem,
+      waveformItem,
+    );
   }
   // While lyrics are open, surface the sync-offset stepper at the top of the
   // overflow menu (only for players that benefit from a latency offset).
@@ -1379,16 +1402,16 @@ const sliderColor = ref<string | undefined>(undefined);
 const backgroundColor = ref<string | undefined>(undefined);
 
 watchEffect(() => {
-  // With a dominant visualizer the view is effectively dark content: force
-  // light text and a dark palette-gradient base. At low opacity (<=50%) the
+  // The artwork wash and a dominant visualizer both need light text on a dark
+  // base. At low visualizer opacity (<=50%) the
   // visualizer is only a faint overlay, so keep the completely normal
   // theme/palette treatment instead of forcing the dark look. This component is
   // permanently mounted via the OSD footer, so gate on the fullscreen player
   // actually being open, or --text-color would stay forced app-wide.
   if (
     store.showFullscreenPlayer &&
-    visualizerActive.value &&
-    visualizerOpacityPref.value > 50
+    (artworkBackgroundVisible.value ||
+      (visualizerActive.value && visualizerOpacityPref.value > 50))
   ) {
     document.documentElement.style.setProperty("--text-color", "#ffffff");
     document.documentElement.style.setProperty(
@@ -1398,6 +1421,7 @@ watchEffect(() => {
     sliderColor.value = "#ffffff";
     const darkBase = Color(compProps.colorPalette.darkColor || "#000");
     backgroundColor.value = `linear-gradient(to bottom, ${darkBase.lighten(0.25).hex()}, ${darkBase.darken(0.25).hex()})`;
+    setStatusBarColorOverride("#101418");
     return;
   }
   const isDarkTheme = vuetify.theme.current.value.dark;
@@ -1448,7 +1472,7 @@ onBeforeUnmount(() => {
   position: relative;
 }
 
-.fullscreen-player-card > :not(.visualizer-layer) {
+.fullscreen-player-card > :not(.visualizer-layer):not(.artwork-backdrop) {
   position: relative;
   z-index: 1;
 }

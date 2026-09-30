@@ -27,6 +27,7 @@ vi.mock("@/plugins/api", async () => {
     playerCommandSeek: vi.fn<MusicAssistantApi["playerCommandSeek"]>(),
     playMedia: vi.fn<MusicAssistantApi["playMedia"]>(),
     sendCommand: vi.fn(),
+    updateUser: vi.fn().mockResolvedValue(undefined),
     // Deliberately a bare { value }, not a ref(): reactive() unwraps refs on
     // read, so a real ref here would arrive at consumers as a plain string
     // and break `api.state.value`. Left disconnected so the on-air lookup
@@ -50,6 +51,7 @@ vi.mock("@/plugins/store", async () => {
       showFullscreenPlayer: false,
       showPlayersMenu: false,
       showQueueItems: false,
+      currentUser: undefined,
     }),
   };
 });
@@ -155,6 +157,7 @@ interface Chapter {
 }
 
 interface TestStore {
+  currentUser?: { user_id: string; preferences: Record<string, unknown> };
   activePlayer?: {
     player_id: string;
     active_source?: string;
@@ -289,6 +292,7 @@ afterEach(async () => {
   testStore.showPlayersMenu = false;
   testStore.showQueueItems = false;
   testStore.curQueueItem = undefined;
+  testStore.currentUser = undefined;
   testApi.queues = {};
   testApi.queueElapsedTime = {};
 });
@@ -568,6 +572,34 @@ describe("PlayerFullscreen overflow menu", () => {
     const labels = await openOverflowMenu(testCase.mediaType);
 
     expect(labels.includes("change_playback_speed")).toBe(testCase.offered);
+  });
+
+  it("offers and persists the artwork background toggle without playback commands", async () => {
+    const { store } = await import("@/plugins/store");
+    const { eventbus } = await import("@/plugins/eventbus");
+    const api = (await import("@/plugins/api")).default;
+    (store as unknown as TestStore).currentUser = {
+      user_id: "test-user",
+      preferences: { unrelated: "keep" },
+    };
+    const labels = await openOverflowMenu(MediaType.RADIO);
+    expect(labels).toContain("settings.artwork_background.label");
+    const calls = vi.mocked(eventbus.emit).mock.calls as unknown as [
+      string,
+      { items: { label: string; selected?: boolean; action?: () => void }[] },
+    ][];
+    const menu = calls.find(([event]) => event === "contextmenu")![1];
+    const toggle = menu.items.find(
+      (item) => item.label === "settings.artwork_background.label",
+    )!;
+    expect(toggle.selected).toBe(true);
+    vi.mocked(api.sendCommand).mockClear();
+    toggle.action!();
+    await nextTick();
+    expect(api.updateUser).toHaveBeenCalledWith("test-user", {
+      preferences: { unrelated: "keep", artwork_background: false },
+    });
+    expect(api.sendCommand).not.toHaveBeenCalled();
   });
 });
 

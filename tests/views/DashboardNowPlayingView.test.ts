@@ -13,6 +13,9 @@ const { routeMock, storeMock } = vi.hoisted(() => ({
   routeMock: { query: {} as Record<string, string> },
   storeMock: {
     activePlayerId: undefined as string | undefined,
+    currentUser: undefined as
+      | { preferences: Record<string, unknown> }
+      | undefined,
     activePlayer: undefined as
       | {
           icon?: string | null;
@@ -77,6 +80,7 @@ describe("DashboardNowPlayingView", () => {
     routeMock.query = {};
     storeMock.activePlayerId = undefined;
     storeMock.activePlayer = undefined;
+    storeMock.currentUser = undefined;
   });
 
   it("pins the active player from the player query param on mount", () => {
@@ -107,6 +111,20 @@ describe("DashboardNowPlayingView", () => {
     expect(wrapper.get("img").attributes("src")).toBe(
       "http://example.com/art.jpg",
     );
+    expect(wrapper.find(".artwork-backdrop").exists()).toBe(true);
+  });
+
+  it("keeps the original background when the user disables artwork backgrounds", () => {
+    storeMock.currentUser = { preferences: { artwork_background: false } };
+    storeMock.activePlayer = {
+      name: "Kitchen",
+      powered: true,
+      current_media: { image_url: "http://example.com/art.jpg" },
+    };
+    const wrapper = mountView();
+    expect(wrapper.find(".artwork-backdrop").exists()).toBe(false);
+    expect(wrapper.find(".now-playing-artwork-image").exists()).toBe(true);
+    wrapper.unmount();
   });
 
   it("shows the player name instead of track info when powered off", () => {
@@ -141,10 +159,14 @@ describe("DashboardNowPlayingView", () => {
     expect(wrapper.text()).toContain("Lost Weekend");
     expect(wrapper.text()).not.toContain("Phono In");
     expect(wrapper.find(".disc-motion").exists()).toBe(true);
+    expect(wrapper.get(".artwork-backdrop img").attributes("src")).toBe(
+      vinyl.value.artwork_url,
+    );
     expect(wrapper.find(".now-playing-timeline").exists()).toBe(false);
     vinyl.value = null;
     await wrapper.vm.$nextTick();
     expect(wrapper.find(".disc-motion").exists()).toBe(false);
+    expect(wrapper.find(".artwork-backdrop").exists()).toBe(false);
     expect(wrapper.text()).toContain("Phono In");
     expect(wrapper.find(".now-playing-timeline").exists()).toBe(true);
     wrapper.unmount();

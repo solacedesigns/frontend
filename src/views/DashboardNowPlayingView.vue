@@ -1,5 +1,13 @@
 <template>
-  <div class="now-playing-view" :style="{ background: backgroundGradient }">
+  <div
+    class="now-playing-view"
+    :class="{ 'has-artwork-background': artworkBackgroundVisible }"
+    :style="{ background: backgroundGradient }"
+  >
+    <ArtworkBackdrop
+      v-if="artworkBackgroundVisible"
+      :artwork-url="artworkBackgroundUrl"
+    />
     <VisualizerCanvas
       v-if="visualizerActive"
       :preset="visualizerPresetPref"
@@ -68,7 +76,9 @@ import VisualizerCanvas from "@/components/VisualizerCanvas.vue";
 import PlayerIcon from "@/components/PlayerIcon.vue";
 import VinylArtwork from "@/components/VinylArtwork.vue";
 import VinylTrackDetails from "@/components/VinylTrackDetails.vue";
+import ArtworkBackdrop from "@/components/ArtworkBackdrop.vue";
 import { useActiveTrackWaveform } from "@/composables/useActiveTrackWaveform";
+import { useArtworkBackground } from "@/composables/useArtworkBackground";
 import { useVinylNowPlaying } from "@/composables/useVinylNowPlaying";
 import { useVisualizer } from "@/composables/visualizer/useVisualizer";
 import { MarqueeTextSync } from "@/helpers/marquee_text_sync";
@@ -101,6 +111,8 @@ const marqueeSync = new MarqueeTextSync();
 // Waveform is always on here: the guest session has no show_waveform preference, so it defaults on.
 const { waveformBins: waveformData } = useActiveTrackWaveform();
 const { vinyl } = useVinylNowPlaying();
+const { artworkUrl: artworkBackgroundUrl, visible: artworkBackgroundVisible } =
+  useArtworkBackground(vinyl);
 
 const artworkUrl = computed(
   () => getMediaImageUrl(store.activePlayer?.current_media?.image_url) || null,
@@ -150,10 +162,16 @@ const backgroundGradient = computed(() => {
   color: var(--text-color, #fff);
 }
 
-/* Lift content above the visualizer layer (z-index 0). */
-.now-playing-view > *:not(.visualizer-layer) {
+/* Both background layers stay out of the layout and below the sharp content. */
+.now-playing-view > *:not(.visualizer-layer):not(.artwork-backdrop) {
   position: relative;
   z-index: 1;
+}
+
+.now-playing-view.has-artwork-background {
+  --text-color: #fff;
+  --text-color-inverse: #000;
+  color: #fff;
 }
 
 /* Keep the vh fallback in a separate rule: the minifier collapses duplicate

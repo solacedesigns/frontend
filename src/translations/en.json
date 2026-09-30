@@ -732,6 +732,13 @@
             "label": "Prefer waveform progress bar",
             "description": "Show a waveform-style progress bar in the fullscreen player when audio analysis data is available for the playing track."
         },
+        "artwork_background": {
+            "label": "Artwork background",
+            "description": "Use the current artwork as a softly blurred, darkened backdrop in Now Playing. Applies to every playback source.",
+            "enabled": "Artwork background enabled",
+            "disabled": "Artwork background disabled",
+            "save_error": "Couldn't save the artwork background setting. Please try again."
+        },
         "audiobook_chapter_progress": {
             "label": "Show audiobook chapter progress",
             "description": "Show elapsed and remaining time for the current audiobook chapter instead of the full audiobook."
