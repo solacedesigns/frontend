@@ -1,6 +1,13 @@
 import DashboardNowPlayingView from "@/views/DashboardNowPlayingView.vue";
 import { mount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ref } from "vue";
+import type { VinylSnapshot } from "@/helpers/vinylNowPlaying";
+
+const vinyl = ref<VinylSnapshot | null>(null);
+vi.mock("@/composables/useVinylNowPlaying", () => ({
+  useVinylNowPlaying: () => ({ vinyl }),
+}));
 
 const { routeMock, storeMock } = vi.hoisted(() => ({
   routeMock: { query: {} as Record<string, string> },
@@ -46,8 +53,10 @@ vi.mock("@/plugins/i18n", () => ({
   $t: (key: string) => key,
 }));
 
-vi.mock("@vueuse/core", () => ({
+vi.mock("@vueuse/core", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@vueuse/core")>()),
   useColorMode: () => ({ value: "light" }),
+  useDocumentVisibility: () => ({ value: "visible" }),
 }));
 
 // PlayerTimeline stub avoids pulling in transport/waveform machinery; MarqueeText needs a slot passthrough so title/artist text stays assertable.
@@ -64,6 +73,7 @@ function mountView() {
 
 describe("DashboardNowPlayingView", () => {
   beforeEach(() => {
+    vinyl.value = null;
     routeMock.query = {};
     storeMock.activePlayerId = undefined;
     storeMock.activePlayer = undefined;
@@ -109,5 +119,34 @@ describe("DashboardNowPlayingView", () => {
 
     expect(wrapper.text()).toContain("Kitchen");
     expect(wrapper.text()).not.toContain("Song Title");
+  });
+
+  it("replaces Phono In with recognized Vinyl without a fake seek timeline", async () => {
+    storeMock.activePlayer = {
+      name: "Record Room",
+      powered: true,
+      current_media: { title: "Phono In" },
+    };
+    vinyl.value = {
+      player_id: "record-room",
+      state: "playing",
+      source_type: "vinyl",
+      title: "Bobby",
+      artist: "Phoebe Bridgers",
+      album: "Lost Weekend",
+      artwork_url: "https://example.com/cover.jpg",
+    };
+    const wrapper = mountView();
+    expect(wrapper.text()).toContain("Bobby");
+    expect(wrapper.text()).toContain("Lost Weekend");
+    expect(wrapper.text()).not.toContain("Phono In");
+    expect(wrapper.find(".disc-motion").exists()).toBe(true);
+    expect(wrapper.find(".now-playing-timeline").exists()).toBe(false);
+    vinyl.value = null;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".disc-motion").exists()).toBe(false);
+    expect(wrapper.text()).toContain("Phono In");
+    expect(wrapper.find(".now-playing-timeline").exists()).toBe(true);
+    wrapper.unmount();
   });
 });

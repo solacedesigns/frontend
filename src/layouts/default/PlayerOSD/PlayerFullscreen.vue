@@ -76,8 +76,13 @@
             class="main-media-details-image"
           >
             <!-- current media image -->
+            <VinylArtwork
+              v-if="vinyl"
+              :artwork-url="vinyl.artwork_url"
+              :playing="true"
+            />
             <v-img
-              v-if="
+              v-else-if="
                 store.activePlayer?.powered != false &&
                 store.activePlayer?.current_media?.image_url
               "
@@ -98,7 +103,14 @@
               />
             </div>
           </div>
-          <div class="main-media-details-track-info">
+          <VinylTrackDetails
+            v-if="vinyl"
+            class="main-media-details-track-info"
+            :vinyl="vinyl"
+            :title-font-size="titleFontSize"
+            :subtitle-font-size="subTitleFontSize"
+          />
+          <div v-else class="main-media-details-track-info">
             <!-- the external source streaming the media shown below -->
             <NowPlayingSourceBadge class="main-media-details-source" />
             <!-- player name as title if its powered off-->
@@ -362,8 +374,13 @@
           class="main-queue-items"
         >
           <div class="main-media-details-image main-media-details-image-alt">
+            <VinylArtwork
+              v-if="vinyl"
+              :artwork-url="vinyl.artwork_url"
+              :playing="true"
+            />
             <v-img
-              v-if="store.activePlayer?.current_media?.image_url"
+              v-else-if="store.activePlayer?.current_media?.image_url"
               :src="
                 getMediaImageUrl(store.activePlayer.current_media.image_url)
               "
@@ -387,7 +404,11 @@
       <!-- player controls (always at bottom)-->
       <div class="player-bottom">
         <!-- timeline / progressbar-->
-        <div class="row" style="margin-left: 5%; margin-right: 5%">
+        <div
+          v-if="!vinyl"
+          class="row"
+          style="margin-left: 5%; margin-right: 5%"
+        >
           <PlayerTimeline
             :show-labels="true"
             :color="sliderColor"
@@ -516,6 +537,8 @@ import PanelDragHandle from "@/components/PanelDragHandle.vue";
 import PlayerIcon from "@/components/PlayerIcon.vue";
 import ListeningHabitsWeatherBtn from "@/components/ListeningHabitsWeatherBtn.vue";
 import VisualizerCanvas from "@/components/VisualizerCanvas.vue";
+import VinylArtwork from "@/components/VinylArtwork.vue";
+import VinylTrackDetails from "@/components/VinylTrackDetails.vue";
 import { Button } from "@/components/ui/button";
 import { useLyricsElapsedTime } from "@/composables/lyrics/useLyricsElapsedTime";
 import { useLyricsOffset } from "@/composables/lyrics/useLyricsOffset";
@@ -546,6 +569,7 @@ import ShuffleBtn from "@/layouts/default/PlayerOSD/PlayerControlBtn/ShuffleBtn.
 import NowPlayingSourceBadge from "@/layouts/default/PlayerOSD/NowPlayingSourceBadge.vue";
 import { useNowPlayingStream } from "@/composables/nowPlayingStream";
 import { useOnAir } from "@/composables/useOnAir";
+import { useVinylNowPlaying } from "@/composables/useVinylNowPlaying";
 import PlayerFullscreenHeaderControls from "@/layouts/default/PlayerOSD/PlayerFullscreenHeaderControls.vue";
 import PlayerVolume from "@/layouts/default/PlayerOSD/PlayerVolume.vue";
 import QueueListItem from "@/layouts/default/PlayerOSD/QueueListItem.vue";
@@ -602,6 +626,7 @@ const showAlbumSubtitle = computed(
 const { albumSubtitle } = useNowPlayingSource();
 const { nowPlayingStream } = useNowPlayingStream();
 const { onAirLabel } = useOnAir();
+const { vinyl } = useVinylNowPlaying();
 
 // Who is presenting, preferred over the station's own blurb: the schedule
 // names a person and an hour, the blurb is usually a channel description.
@@ -847,7 +872,7 @@ watch(
 // Whether the right-hand column (queue list or lyrics) is visible. Used to
 // collapse the media details column on small/narrow screens.
 const showRightColumn = computed(
-  () => store.showQueueItems || showLyrics.value,
+  () => !vinyl.value && (store.showQueueItems || showLyrics.value),
 );
 
 // The unified queue list (virtualized rows, paging, now-playing focus and

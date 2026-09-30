@@ -4,7 +4,13 @@ import type { MusicAssistantApi } from "@/plugins/api";
 import { MediaType, PlaybackState } from "@/plugins/api/interfaces";
 import { shallowMount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { nextTick } from "vue";
+import { nextTick, ref } from "vue";
+import type { VinylSnapshot } from "@/helpers/vinylNowPlaying";
+
+const vinyl = ref<VinylSnapshot | null>(null);
+vi.mock("@/composables/useVinylNowPlaying", () => ({
+  useVinylNowPlaying: () => ({ vinyl }),
+}));
 
 // Only the fields the lyrics clock and its gate read are mocked; the elapsed
 // time resolver reaches the queue through the player's active_source, so both
@@ -249,6 +255,7 @@ async function seedPlayingQueue(): Promise<void> {
 }
 
 beforeEach(() => {
+  vinyl.value = null;
   pendingFrames = new Map();
   nextRafId = 0;
   vi.stubGlobal(
@@ -347,6 +354,42 @@ describe("PlayerFullscreen chapter queue", () => {
 
     expect(api.playerCommandSeek).toHaveBeenCalledWith("p1", 60);
     expect(api.playMedia).not.toHaveBeenCalled();
+  });
+
+  it("shows Vinyl instead of an old queue, with no fabricated seek timeline", async () => {
+    const fullscreen = await mountChapterQueue();
+    const { store } = await import("@/plugins/store");
+    const oldQueue = store.curQueueItem;
+    vinyl.value = {
+      player_id: "record-room",
+      state: "playing",
+      source_type: "vinyl",
+      title: "Bobby",
+      artist: "Phoebe Bridgers",
+      album: "Lost Weekend",
+      artwork_url: "https://example.com/cover.jpg",
+    };
+    await nextTick();
+    expect(fullscreen.findComponent({ name: "VinylArtwork" }).exists()).toBe(
+      true,
+    );
+    expect(
+      fullscreen.findComponent({ name: "VinylTrackDetails" }).props("vinyl"),
+    ).toEqual(vinyl.value);
+    expect(fullscreen.findComponent({ name: "PlayerTimeline" }).exists()).toBe(
+      false,
+    );
+    expect(fullscreen.findAll(".queue-chapter")).toHaveLength(0);
+    expect(store.curQueueItem).toBe(oldQueue);
+    vinyl.value = null;
+    await nextTick();
+    expect(fullscreen.findComponent({ name: "VinylArtwork" }).exists()).toBe(
+      false,
+    );
+    expect(fullscreen.findComponent({ name: "PlayerTimeline" }).exists()).toBe(
+      true,
+    );
+    expect(fullscreen.findAll(".queue-chapter")).toHaveLength(2);
   });
 });
 

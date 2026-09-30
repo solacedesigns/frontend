@@ -13,8 +13,14 @@
     </div>
     <template v-else>
       <div class="now-playing-artwork">
+        <VinylArtwork
+          v-if="vinyl"
+          class="now-playing-vinyl-artwork"
+          :artwork-url="vinyl.artwork_url"
+          :playing="true"
+        />
         <img
-          v-if="artworkUrl"
+          v-else-if="artworkUrl"
           :src="artworkUrl"
           :alt="$t('tooltip.artwork')"
           class="now-playing-artwork-image"
@@ -24,7 +30,8 @@
         </div>
       </div>
 
-      <div class="now-playing-info">
+      <VinylTrackDetails v-if="vinyl" class="now-playing-info" :vinyl="vinyl" />
+      <div v-else class="now-playing-info">
         <div
           v-if="store.activePlayer.powered === false"
           class="now-playing-title"
@@ -44,7 +51,7 @@
         </template>
       </div>
 
-      <div class="now-playing-timeline">
+      <div v-if="!vinyl" class="now-playing-timeline">
         <PlayerTimeline
           :show-labels="true"
           :color="timelineColor"
@@ -59,7 +66,10 @@
 import MarqueeText from "@/components/MarqueeText.vue";
 import VisualizerCanvas from "@/components/VisualizerCanvas.vue";
 import PlayerIcon from "@/components/PlayerIcon.vue";
+import VinylArtwork from "@/components/VinylArtwork.vue";
+import VinylTrackDetails from "@/components/VinylTrackDetails.vue";
 import { useActiveTrackWaveform } from "@/composables/useActiveTrackWaveform";
+import { useVinylNowPlaying } from "@/composables/useVinylNowPlaying";
 import { useVisualizer } from "@/composables/visualizer/useVisualizer";
 import { MarqueeTextSync } from "@/helpers/marquee_text_sync";
 import {
@@ -90,6 +100,7 @@ const marqueeSync = new MarqueeTextSync();
 
 // Waveform is always on here: the guest session has no show_waveform preference, so it defaults on.
 const { waveformBins: waveformData } = useActiveTrackWaveform();
+const { vinyl } = useVinylNowPlaying();
 
 const artworkUrl = computed(
   () => getMediaImageUrl(store.activePlayer?.current_media?.image_url) || null,
@@ -178,6 +189,10 @@ const backgroundGradient = computed(() => {
   object-fit: cover;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.now-playing-vinyl-artwork {
+  width: min(73vh, 90vw);
 }
 
 .now-playing-artwork-fallback {
