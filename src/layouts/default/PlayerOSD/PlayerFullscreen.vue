@@ -21,7 +21,7 @@
         role="dialog"
         aria-modal="true"
         :aria-label="$t('tooltip.artwork')"
-        @click.self="artworkOnlyOpen = false"
+        @click="artworkOnlyOpen = false"
       >
         <img
           class="artwork-only-image"

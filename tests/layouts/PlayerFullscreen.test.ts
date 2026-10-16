@@ -485,6 +485,12 @@ describe("PlayerFullscreen player select button", () => {
       "https://example.com/cover.jpg",
     );
 
+    await fullscreen.find(".artwork-only-image").trigger("click");
+    expect(fullscreen.find(".artwork-only-view").exists()).toBe(false);
+
+    await fullscreen.find(".main-media-details-image").trigger("click");
+    expect(fullscreen.find(".artwork-only-view").exists()).toBe(true);
+
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     await nextTick();
 
