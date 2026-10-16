@@ -167,6 +167,7 @@ interface TestStore {
     sound_mode_list?: unknown[];
     playback_state?: PlaybackState;
     current_media?: {
+      image_url?: string;
       media_type?: MediaType;
       title?: string | null;
       artist?: string | null;
@@ -461,6 +462,33 @@ describe("PlayerFullscreen player select button", () => {
     await fullscreen.find("#fullscreen-player-select-button").trigger("click");
 
     expect(testStore.showPlayersMenu).toBe(true);
+    expect(testStore.showFullscreenPlayer).toBe(true);
+  });
+
+  it("opens artwork edge-to-edge and Escape closes only the artwork view", async () => {
+    const { store } = await import("@/plugins/store");
+    const testStore = store as unknown as TestStore;
+    testStore.activePlayer = {
+      player_id: "p1",
+      group_members: [],
+      current_media: {
+        title: "Song",
+        image_url: "https://example.com/cover.jpg",
+      },
+    };
+
+    const fullscreen = await mountFullscreenDialog();
+    await fullscreen.find(".main-media-details-image").trigger("click");
+
+    expect(fullscreen.find(".artwork-only-view").exists()).toBe(true);
+    expect(fullscreen.find(".artwork-only-image").attributes("src")).toBe(
+      "https://example.com/cover.jpg",
+    );
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await nextTick();
+
+    expect(fullscreen.find(".artwork-only-view").exists()).toBe(false);
     expect(testStore.showFullscreenPlayer).toBe(true);
   });
 

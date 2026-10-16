@@ -15,6 +15,29 @@
       class="fullscreen-player-card"
       :style="{ background: backgroundColor }"
     >
+      <div
+        v-if="artworkOnlyOpen && fullscreenArtworkUrl"
+        class="artwork-only-view"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="$t('tooltip.artwork')"
+        @click.self="artworkOnlyOpen = false"
+      >
+        <img
+          class="artwork-only-image"
+          :src="fullscreenArtworkUrl"
+          :alt="$t('tooltip.artwork')"
+        />
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          class="artwork-only-close"
+          :aria-label="$t('tooltip.close_fullscreen')"
+          @click="artworkOnlyOpen = false"
+        >
+          <ChevronDownIcon class="size-5" />
+        </Button>
+      </div>
       <ArtworkBackdrop
         v-if="artworkBackgroundVisible"
         :artwork-url="artworkBackgroundUrl"
@@ -78,6 +101,17 @@
           <div
             v-if="$vuetify.display.height > 600"
             class="main-media-details-image"
+            :class="{
+              'main-media-details-image--expandable': fullscreenArtworkUrl,
+            }"
+            :role="fullscreenArtworkUrl ? 'button' : undefined"
+            :tabindex="fullscreenArtworkUrl ? 0 : undefined"
+            :aria-label="
+              fullscreenArtworkUrl ? $t('tooltip.enter_fullscreen') : undefined
+            "
+            @click="fullscreenArtworkUrl && (artworkOnlyOpen = true)"
+            @keydown.enter.prevent="artworkOnlyOpen = true"
+            @keydown.space.prevent="artworkOnlyOpen = true"
           >
             <!-- current media image -->
             <VinylArtwork
@@ -633,6 +667,12 @@ const { albumSubtitle } = useNowPlayingSource();
 const { nowPlayingStream } = useNowPlayingStream();
 const { onAirLabel } = useOnAir();
 const { vinyl } = useVinylNowPlaying();
+const artworkOnlyOpen = ref(false);
+const fullscreenArtworkUrl = computed(() => {
+  if (vinyl.value?.artwork_url) return vinyl.value.artwork_url;
+  const imageUrl = store.activePlayer?.current_media?.image_url;
+  return imageUrl ? getMediaImageUrl(imageUrl) : "";
+});
 const {
   enabled: artworkBackgroundEnabled,
   artworkUrl: artworkBackgroundUrl,
@@ -1382,6 +1422,12 @@ const openQueueMenu = function (evt: Event) {
 
 // Handle Escape key to close fullscreen player (since persistent disables default behavior)
 const onKeydown = (e: KeyboardEvent) => {
+  if (e.key === "Escape" && artworkOnlyOpen.value) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    artworkOnlyOpen.value = false;
+    return;
+  }
   if (
     e.key === "Escape" &&
     store.showFullscreenPlayer &&
@@ -1392,9 +1438,9 @@ const onKeydown = (e: KeyboardEvent) => {
   }
 };
 onMounted(() => {
-  window.addEventListener("keydown", onKeydown);
+  window.addEventListener("keydown", onKeydown, true);
   onBeforeUnmount(() => {
-    window.removeEventListener("keydown", onKeydown);
+    window.removeEventListener("keydown", onKeydown, true);
   });
 });
 
@@ -1472,7 +1518,8 @@ onBeforeUnmount(() => {
   position: relative;
 }
 
-.fullscreen-player-card > :not(.visualizer-layer):not(.artwork-backdrop) {
+.fullscreen-player-card
+  > :not(.visualizer-layer):not(.artwork-backdrop):not(.artwork-only-view) {
   position: relative;
   z-index: 1;
 }
@@ -1710,6 +1757,37 @@ onBeforeUnmount(() => {
   padding-left: 20px;
   padding-right: 20px;
   container-type: size;
+}
+.main-media-details-image--expandable {
+  cursor: zoom-in;
+}
+.artwork-only-view {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #000;
+  cursor: zoom-out;
+}
+.artwork-only-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.artwork-only-close {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  color: #fff;
+  background: rgb(0 0 0 / 55%);
+  border-radius: 999px;
+  cursor: pointer;
 }
 .main-media-details-image .v-img {
   /* Fallback for engines without container query units; they drop the pair below and collapse the image to 0x0. */
