@@ -44,11 +44,31 @@
         <div v-else-if="failureSummary" class="task-failure">
           {{ failureSummary }}
         </div>
+
+        <div class="task-status-chips task-status-chips--mobile">
+          <Badge variant="outline" :class="statusBadgeClass">
+            {{ formattedStatus }}
+          </Badge>
+          <Badge
+            v-if="isScheduled"
+            variant="outline"
+            class="border-slate-300 bg-slate-500/10 text-slate-700 dark:border-slate-700 dark:bg-slate-500/10 dark:text-slate-300"
+          >
+            {{ t("background_tasks.scheduled") }}
+          </Badge>
+          <Badge
+            v-if="isScheduled && !task.schedule?.enabled"
+            variant="outline"
+            class="border-amber-300 bg-amber-500/10 text-amber-700 dark:border-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+          >
+            {{ t("background_tasks.disabled") }}
+          </Badge>
+        </div>
       </div>
     </template>
 
     <template #append>
-      <div class="task-status-chips">
+      <div class="task-status-chips task-status-chips--append">
         <Badge variant="outline" :class="statusBadgeClass">
           {{ formattedStatus }}
         </Badge>
@@ -210,6 +230,10 @@ const {
   justify-content: flex-end;
 }
 
+.task-status-chips--mobile {
+  display: none;
+}
+
 .task-summary {
   font-size: 13px;
   color: rgba(var(--v-theme-on-surface), 0.7);
@@ -334,5 +358,25 @@ const {
 
 .task-card-footer .task-status-chips {
   justify-content: flex-start;
+}
+
+@media (max-width: 600px) {
+  :deep(.v-list-item__content) {
+    min-width: 0;
+  }
+
+  .task-meta {
+    width: 100%;
+  }
+
+  .task-status-chips--append {
+    display: none;
+  }
+
+  .task-status-chips--mobile {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 4px;
+  }
 }
 </style>
