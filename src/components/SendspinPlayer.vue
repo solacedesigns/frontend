@@ -306,9 +306,11 @@ onMounted(() => {
         // Use a placeholder URL - the WebSocket interceptor will route through WebRTC
         // The URL just needs to be valid and contain "/sendspin" for the interceptor
         player = new SendspinPlayer({
-          baseUrl: "http://sendspin.local",
+          url: "ws://sendspin.local/sendspin",
           audioElement,
           clientName: getDeviceName(),
+          manufacturer: "Music Assistant",
+          softwareVersion: "Music Assistant Web",
           // How the server recognizes us as its built-in player rather than a
           // third-party client that has to be paired by hand.
           productName: "Web Player",
@@ -398,6 +400,7 @@ onBeforeUnmount(() => {
     player.disconnect(
       isPlaybackMode(webPlayer.mode) ? "restart" : "user_request",
     );
+    player.destroy();
     player = null;
   }
   if (unsubMetadata) unsubMetadata();
